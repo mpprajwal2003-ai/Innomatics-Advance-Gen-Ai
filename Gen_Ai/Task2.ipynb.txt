@@ -1,0 +1,705 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Task 2: Deep Technical Blog on LangChain\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "skrOrT1YmWN-"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Objective\n",
+        "\n",
+        "The objective of this task is to understand LangChain and learn how to build LLM-powered applications using modular components such as prompt templates, chains, memory, tools, and agents.\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "f7C6EdMIma-B"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Introduction\n",
+        "\n",
+        "LangChain is a powerful framework used to build applications powered by Large Language Models (LLMs). Instead of writing static prompts, LangChain allows developers to create dynamic, reusable, and scalable AI pipelines.\n",
+        " It solves key problems like:\n",
+        "\n",
+        "Prompt management\n",
+        "\n",
+        "Workflow chaining\n",
+        "\n",
+        "Tool integration\n",
+        "\n",
+        "Memory handling\n",
+        "\n",
+        "In this notebook, we will explore LangChain step-by-step with practical implementations.\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "lmi9sXpvmifu"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Pipeline Flow\n",
+        "\n",
+        "User Input → Prompt → LLM → Chain → Tool/Agent → Output"
+      ],
+      "metadata": {
+        "id": "_asnektamxa2"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Section 0: Setup & Installation\n",
+        "\n",
+        "\n",
+        "Install required libraries"
+      ],
+      "metadata": {
+        "id": "O1I7bg8Bm1KW"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "from getpass import getpass\n",
+        "\n",
+        "os.environ[\"GOOGLE_API_KEY\"] = getpass(\"Enter your Gemini API Key: \")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "w7AXII83qMag",
+        "outputId": "d877d75d-0c9e-4f58-9fa7-8ffe6076682a"
+      },
+      "execution_count": 14,
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "Enter your Gemini API Key: ··········\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from langchain_google_genai import ChatGoogleGenerativeAI\n",
+        "from langchain_core.messages import HumanMessage\n",
+        "\n",
+        "llm = ChatGoogleGenerativeAI(\n",
+        "    model=\"gemini-2.5-flash\",   # ✅ Correct model\n",
+        "    temperature=0.7\n",
+        ")\n",
+        "\n",
+        "response = llm.invoke([\n",
+        "    HumanMessage(content=\"Say hello in one sentence\")\n",
+        "])\n",
+        "\n",
+        "print(response.content)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "B9wxVRVgrT3H",
+        "outputId": "04371271-0911-463d-c9de-a2c2ea08f83a"
+      },
+      "execution_count": 15,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Hello there!\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "SECTION 1: LLMs and Chat Models\n",
+        "\n",
+        "\n",
+        "In this section, we explore how to use a Large Language Model (LLM) in LangChain.\n",
+        " A Chat Model works with structured messages:\n",
+        "\n",
+        "System → sets behavior\n",
+        "\n",
+        "User (Human) → gives input\n",
+        "\n",
+        "AI → generates output\n",
+        "\n",
+        "This structure helps build real-world applications like chatbots, assistants, and AI tools."
+      ],
+      "metadata": {
+        "id": "auSmx0v0qL4T"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "SECTION 2: Prompt Templates\n",
+        "\n",
+        "\n",
+        "In real-world applications, writing prompts using f-strings is not scalable and becomes difficult to manage.\n",
+        "\n",
+        "Prompt Templates solve this problem by:\n",
+        "\n",
+        "Making prompts reusable\n",
+        "\n",
+        "Separating logic from input\n",
+        "\n",
+        "Allowing dynamic inputs\n",
+        "\n",
+        "Instead of hardcoding prompts, we define a template and pass values later."
+      ],
+      "metadata": {
+        "id": "zux0BU12yT9S"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Correct import\n",
+        "from langchain_core.prompts import PromptTemplate\n",
+        "\n",
+        "# Create template\n",
+        "template = \"Explain {topic} in simple terms for beginners.\"\n",
+        "\n",
+        "prompt = PromptTemplate(\n",
+        "    input_variables=[\"topic\"],\n",
+        "    template=template\n",
+        ")\n",
+        "\n",
+        "# Test case 1\n",
+        "final_prompt = prompt.format(topic=\"Artificial Intelligence\")\n",
+        "print(final_prompt)\n",
+        "\n",
+        "# Test case 2\n",
+        "final_prompt2 = prompt.format(topic=\"Machine Learning\")\n",
+        "print(final_prompt2)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "wKsfvG_9wieU",
+        "outputId": "0243a289-d862-49de-e065-83651ac07ef1"
+      },
+      "execution_count": 20,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Explain Artificial Intelligence in simple terms for beginners.\n",
+            "Explain Machine Learning in simple terms for beginners.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "SECTION 3: Multi-Input Prompt System\n",
+        "\n",
+        "\n",
+        "In this section, we build a prompt that accepts multiple inputs instead of just one.\n",
+        "\n",
+        "This makes prompts more flexible and useful in real-world applications.\n",
+        "\n",
+        "We will use three inputs:\n",
+        "\n",
+        "topic\n",
+        "\n",
+        "audience\n",
+        "\n",
+        "tone\n",
+        "\n",
+        "This helps generate customized outputs for different users."
+      ],
+      "metadata": {
+        "id": "yyyG4JtOy2kO"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from langchain_core.prompts import PromptTemplate\n",
+        "\n",
+        "# Create multi-input template\n",
+        "template = \"Explain {topic} for {audience} in a {tone} tone.\"\n",
+        "\n",
+        "prompt = PromptTemplate(\n",
+        "    input_variables=[\"topic\", \"audience\", \"tone\"],\n",
+        "    template=template\n",
+        ")\n",
+        "\n",
+        "# Test Case 1\n",
+        "output1 = prompt.format(\n",
+        "    topic=\"Artificial Intelligence\",\n",
+        "    audience=\"beginners\",\n",
+        "    tone=\"friendly\"\n",
+        ")\n",
+        "\n",
+        "print(\"Test Case 1:\")\n",
+        "print(output1)\n",
+        "\n",
+        "# Test Case 2\n",
+        "output2 = prompt.format(\n",
+        "    topic=\"Python\",\n",
+        "    audience=\"kids\",\n",
+        "    tone=\"fun\"\n",
+        ")\n",
+        "\n",
+        "print(\"\\nTest Case 2:\")\n",
+        "print(output2)\n",
+        "\n",
+        "# Test Case 3\n",
+        "output3 = prompt.format(\n",
+        "    topic=\"Deep Learning\",\n",
+        "    audience=\"engineers\",\n",
+        "    tone=\"technical\"\n",
+        ")\n",
+        "\n",
+        "print(\"\\nTest Case 3:\")\n",
+        "print(output3)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "XjM3qm0zyfYw",
+        "outputId": "ead8416e-e19e-4e21-f372-6846ae2ff3a1"
+      },
+      "execution_count": 21,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Test Case 1:\n",
+            "Explain Artificial Intelligence for beginners in a friendly tone.\n",
+            "\n",
+            "Test Case 2:\n",
+            "Explain Python for kids in a fun tone.\n",
+            "\n",
+            "Test Case 3:\n",
+            "Explain Deep Learning for engineers in a technical tone.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "SECTION 4: Prompt Variations Engine\n",
+        "\n",
+        "\n",
+        "In this section, we create multiple prompt templates for different use cases.\n",
+        "\n",
+        "Instead of using one fixed template, we design different styles:\n",
+        "\n",
+        "Teaching Style → step-by-step explanation\n",
+        "\n",
+        "Interview Style → questions\n",
+        "\n",
+        "Storytelling Style → creative explanation\n",
+        "\n",
+        "This helps build flexible AI systems for different scenarios."
+      ],
+      "metadata": {
+        "id": "8W4DXIA9zWDT"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from langchain_core.prompts import PromptTemplate\n",
+        "\n",
+        "# Teaching Template\n",
+        "teaching_template = PromptTemplate(\n",
+        "    input_variables=[\"topic\"],\n",
+        "    template=\"Explain {topic} clearly step by step.\"\n",
+        ")\n",
+        "\n",
+        "# Interview Template\n",
+        "interview_template = PromptTemplate(\n",
+        "    input_variables=[\"topic\"],\n",
+        "    template=\"Ask 3 interview questions about {topic}.\"\n",
+        ")\n",
+        "\n",
+        "# Storytelling Template\n",
+        "story_template = PromptTemplate(\n",
+        "    input_variables=[\"topic\"],\n",
+        "    template=\"Explain {topic} as a story.\"\n",
+        ")\n",
+        "\n",
+        "# Input\n",
+        "topic = \"Machine Learning\"\n",
+        "\n",
+        "# Outputs\n",
+        "print(\"Teaching Style:\")\n",
+        "print(teaching_template.format(topic=topic))\n",
+        "\n",
+        "print(\"\\nInterview Style:\")\n",
+        "print(interview_template.format(topic=topic))\n",
+        "\n",
+        "print(\"\\nStorytelling Style:\")\n",
+        "print(story_template.format(topic=topic))"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "p3D00CZgzNh0",
+        "outputId": "1caa5e1d-82f0-498f-a803-3b34a0ce6805"
+      },
+      "execution_count": 22,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Teaching Style:\n",
+            "Explain Machine Learning clearly step by step.\n",
+            "\n",
+            "Interview Style:\n",
+            "Ask 3 interview questions about Machine Learning.\n",
+            "\n",
+            "Storytelling Style:\n",
+            "Explain Machine Learning as a story.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "SECTION 5: ChatPromptTemplate (Roles System)\n",
+        "\n",
+        "\n",
+        "In this section, we use ChatPromptTemplate, which allows us to structure prompts using roles.\n",
+        "\n",
+        "There are mainly 3 roles:\n",
+        "\n",
+        "System → defines behavior of AI\n",
+        "\n",
+        "Human → user input\n",
+        "\n",
+        "AI → response\n",
+        "\n",
+        "This is useful for building chatbots, assistants, and real-world AI applications."
+      ],
+      "metadata": {
+        "id": "WBYzeuSAzs9E"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from langchain_core.prompts import ChatPromptTemplate\n",
+        "\n",
+        "# Create chat template\n",
+        "chat_template = ChatPromptTemplate.from_messages([\n",
+        "    (\"system\", \"You are a {role}.\"),\n",
+        "    (\"human\", \"Explain {topic} in simple terms.\")\n",
+        "])\n",
+        "\n",
+        "# Test Case 1\n",
+        "messages1 = chat_template.format_messages(\n",
+        "    role=\"teacher\",\n",
+        "    topic=\"Neural Networks\"\n",
+        ")\n",
+        "\n",
+        "print(\"Test Case 1:\")\n",
+        "for msg in messages1:\n",
+        "    print(msg)\n",
+        "\n",
+        "# Test Case 2\n",
+        "messages2 = chat_template.format_messages(\n",
+        "    role=\"motivator\",\n",
+        "    topic=\"Success\"\n",
+        ")\n",
+        "\n",
+        "print(\"\\nTest Case 2:\")\n",
+        "for msg in messages2:\n",
+        "    print(msg)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "55ktp0bbzfKs",
+        "outputId": "a52dc3d6-fd91-4c9f-ceb6-c99fb9f8fb2c"
+      },
+      "execution_count": 23,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Test Case 1:\n",
+            "content='You are a teacher.' additional_kwargs={} response_metadata={}\n",
+            "content='Explain Neural Networks in simple terms.' additional_kwargs={} response_metadata={}\n",
+            "\n",
+            "Test Case 2:\n",
+            "content='You are a motivator.' additional_kwargs={} response_metadata={}\n",
+            "content='Explain Success in simple terms.' additional_kwargs={} response_metadata={}\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "SECTION 6: Input Validation + Prompt Generator\n",
+        "\n",
+        "\n",
+        "In this section, we build a system that:\n",
+        "\n",
+        "Validates user input\n",
+        "\n",
+        "Generates structured prompts dynamically\n",
+        "\n",
+        "\n",
+        "We ensure:\n",
+        "\n",
+        "Only valid values are accepted\n",
+        "\n",
+        "Default values are assigned if needed\n",
+        "\n",
+        "\n",
+        "This is important in real-world applications to avoid errors and maintain consistency."
+      ],
+      "metadata": {
+        "id": "MR7N1hTg0Bkb"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from langchain_core.prompts import PromptTemplate\n",
+        "\n",
+        "# Step 1: Validation Function\n",
+        "def validate_inputs(audience, tone):\n",
+        "\n",
+        "    valid_audience = [\"beginner\", \"intermediate\", \"expert\"]\n",
+        "    valid_tone = [\"formal\", \"casual\", \"fun\"]\n",
+        "\n",
+        "    if audience not in valid_audience:\n",
+        "        print(\"Invalid audience! Setting default: beginner\")\n",
+        "        audience = \"beginner\"\n",
+        "\n",
+        "    if tone not in valid_tone:\n",
+        "        print(\"Invalid tone! Setting default: formal\")\n",
+        "        tone = \"formal\"\n",
+        "\n",
+        "    return audience, tone\n",
+        "\n",
+        "\n",
+        "# Step 2: Prompt Generator Function\n",
+        "def generate_prompt(topic, audience, tone, style):\n",
+        "\n",
+        "    audience, tone = validate_inputs(audience, tone)\n",
+        "\n",
+        "    # Different styles\n",
+        "    if style == \"teaching\":\n",
+        "        template = \"Explain {topic} for {audience} in a {tone} teaching style.\"\n",
+        "\n",
+        "    elif style == \"interview\":\n",
+        "        template = \"Ask interview questions about {topic} for {audience} in a {tone} tone.\"\n",
+        "\n",
+        "    elif style == \"storytelling\":\n",
+        "        template = \"Explain {topic} as a story for {audience} in a {tone} tone.\"\n",
+        "\n",
+        "    else:\n",
+        "        template = \"Explain {topic} for {audience} in a {tone} tone.\"\n",
+        "\n",
+        "    prompt = PromptTemplate(\n",
+        "        input_variables=[\"topic\", \"audience\", \"tone\"],\n",
+        "        template=template\n",
+        "    )\n",
+        "\n",
+        "    return prompt.format(\n",
+        "        topic=topic,\n",
+        "        audience=audience,\n",
+        "        tone=tone\n",
+        "    )\n",
+        "\n",
+        "\n",
+        "# 🔹 Test Case 1\n",
+        "print(\"Test Case 1:\")\n",
+        "print(generate_prompt(\"AI\", \"beginner\", \"fun\", \"storytelling\"))\n",
+        "\n",
+        "# 🔹 Test Case 2 (Invalid input test)\n",
+        "print(\"\\nTest Case 2:\")\n",
+        "print(generate_prompt(\"Python\", \"kids\", \"cool\", \"teaching\"))\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "FmcusLchz30r",
+        "outputId": "6a3b21f7-63d7-495c-a6d9-296c366b2429"
+      },
+      "execution_count": 24,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Test Case 1:\n",
+            "Explain AI as a story for beginner in a fun tone.\n",
+            "\n",
+            "Test Case 2:\n",
+            "Invalid audience! Setting default: beginner\n",
+            "Invalid tone! Setting default: formal\n",
+            "Explain Python for beginner in a formal teaching style.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "SECTION 7: Template Reusability Test (Final Section)\n",
+        "\n",
+        "\n",
+        "In this section, we test reusability of a single prompt template.\n",
+        "\n",
+        "Instead of creating multiple templates, we use one template and pass different inputs.\n",
+        "\n",
+        "This proves:\n",
+        "\n",
+        "The template is reusable\n",
+        "\n",
+        "The system is scalable\n",
+        "\n",
+        "Clean design is maintained\n"
+      ],
+      "metadata": {
+        "id": "S2ppBUNC0fbT"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from langchain_core.prompts import PromptTemplate\n",
+        "\n",
+        "# One reusable template\n",
+        "template = \"Explain {topic} for {audience} in a {tone} tone.\"\n",
+        "\n",
+        "prompt = PromptTemplate(\n",
+        "    input_variables=[\"topic\", \"audience\", \"tone\"],\n",
+        "    template=template\n",
+        ")\n",
+        "\n",
+        "# 5 different test cases\n",
+        "test_cases = [\n",
+        "    {\"topic\": \"AI\", \"audience\": \"beginner\", \"tone\": \"fun\"},\n",
+        "    {\"topic\": \"Python\", \"audience\": \"intermediate\", \"tone\": \"casual\"},\n",
+        "    {\"topic\": \"Deep Learning\", \"audience\": \"expert\", \"tone\": \"formal\"},\n",
+        "    {\"topic\": \"Data Science\", \"audience\": \"beginner\", \"tone\": \"formal\"},\n",
+        "    {\"topic\": \"Machine Learning\", \"audience\": \"intermediate\", \"tone\": \"fun\"},\n",
+        "]\n",
+        "\n",
+        "# Run all test cases\n",
+        "for i, case in enumerate(test_cases, 1):\n",
+        "    print(f\"Test Case {i}:\")\n",
+        "    print(prompt.format(**case))\n",
+        "    print()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "cVcq8u0E0Qn7",
+        "outputId": "5ebc777e-12ce-4bf2-aa96-270127b8d7e4"
+      },
+      "execution_count": 25,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Test Case 1:\n",
+            "Explain AI for beginner in a fun tone.\n",
+            "\n",
+            "Test Case 2:\n",
+            "Explain Python for intermediate in a casual tone.\n",
+            "\n",
+            "Test Case 3:\n",
+            "Explain Deep Learning for expert in a formal tone.\n",
+            "\n",
+            "Test Case 4:\n",
+            "Explain Data Science for beginner in a formal tone.\n",
+            "\n",
+            "Test Case 5:\n",
+            "Explain Machine Learning for intermediate in a fun tone.\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Conclusion\n",
+        "\n",
+        "In this assignment, I learned how to design dynamic and reusable prompt systems using LangChain.\n",
+        "\n",
+        "Key takeaways:\n",
+        "\n",
+        "PromptTemplate replaces hardcoded prompts\n",
+        "Multi-input prompts improve flexibility\n",
+        "ChatPromptTemplate helps build conversational systems\n",
+        "Validation ensures robustness\n",
+        "Reusability improves scalability\n",
+        "\n",
+        "This task helped me understand how real-world GenAI applications are built using structured prompt engineering."
+      ],
+      "metadata": {
+        "id": "9IqCTxZn02BN"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "WQCtq4we0uLc"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
