@@ -1,0 +1,7 @@
+langchain
+langchain-groq
+python-dotenv
+langsmith
+streamlit
+pypdf
+pydantic

@@ -1,0 +1,4 @@
+John Doe
+Skills: Python, Machine Learning, NLP, Deep Learning, SQL
+Experience: 3 years in Data Science
+Tools: TensorFlow, Pandas, Scikit-learn
